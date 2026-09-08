@@ -1,0 +1,141 @@
+﻿{% extends "base.html" %}
+{% block title %}Mark Attendance{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0"><i class="fa-solid fa-pen-to-square me-2 text-primary"></i>Mark Attendance</h4>
+    <p class="text-muted mb-0">Select subject and date to record attendance</p>
+  </div>
+</div>
+
+<!-- Filter Row -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-3 align-items-end">
+      <div class="col-md-5">
+        <label class="form-label fw-semibold small">Subject</label>
+        <select name="subject_id" class="form-select" id="subjectSelect" onchange="this.form.submit()">
+          <option value="">-- Select Subject --</option>
+          {% for subj in subjects %}
+          <option value="{{ subj.id }}" {% if sel_subj_id == subj.id %}selected{% endif %}>
+            {{ subj.name }} ({{ subj.code }}) — Sem {{ subj.semester }} Sec {{ subj.section }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold small">Date</label>
+        <input type="date" name="date" class="form-control"
+               value="{{ sel_date.isoformat() }}"
+               max="{{ today.isoformat() }}" onchange="this.form.submit()"/>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="fa-solid fa-search me-1"></i>Load
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if sel_subj_id and students %}
+<form method="POST">
+  <input type="hidden" name="subject_id" value="{{ sel_subj_id }}"/>
+  <input type="hidden" name="date" value="{{ sel_date.isoformat() }}"/>
+
+  <div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span class="fw-semibold">
+        <i class="fa-solid fa-users me-2"></i>
+        Students — {{ sel_date.strftime("%d %B %Y") }}
+        <span class="badge bg-secondary ms-2">{{ students|length }} students</span>
+      </span>
+      <div class="btn-group btn-group-sm">
+        <button type="button" class="btn btn-success" onclick="markAll('P')">
+          <i class="fa-solid fa-check-double me-1"></i>All Present
+        </button>
+        <button type="button" class="btn btn-danger" onclick="markAll('A')">
+          <i class="fa-solid fa-xmark me-1"></i>All Absent
+        </button>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th width="50">#</th>
+              <th>USN</th>
+              <th>Name</th>
+              <th class="text-center" width="220">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for stu in students %}
+            {% set cur = existing.get(stu.id, 'A') %}
+            <tr id="row_{{ stu.id }}" class="{% if cur=='P' %}table-success{% elif cur=='L' %}table-warning{% else %}table-danger{% endif %}">
+              <td class="text-muted">{{ loop.index }}</td>
+              <td><code>{{ stu.usn }}</code></td>
+              <td class="fw-semibold">{{ stu.name }}</td>
+              <td class="text-center">
+                <div class="btn-group btn-group-sm" role="group">
+                  <input type="radio" class="btn-check" name="status_{{ stu.id }}" id="p_{{ stu.id }}" value="P" {% if cur=='P' %}checked{% endif %} onchange="colorRow({{ stu.id }},'P')"/>
+                  <label class="btn btn-outline-success" for="p_{{ stu.id }}">
+                    <i class="fa-solid fa-check"></i> P
+                  </label>
+                  <input type="radio" class="btn-check" name="status_{{ stu.id }}" id="a_{{ stu.id }}" value="A" {% if cur=='A' %}checked{% endif %} onchange="colorRow({{ stu.id }},'A')"/>
+                  <label class="btn btn-outline-danger" for="a_{{ stu.id }}">
+                    <i class="fa-solid fa-xmark"></i> A
+                  </label>
+                  <input type="radio" class="btn-check" name="status_{{ stu.id }}" id="l_{{ stu.id }}" value="L" {% if cur=='L' %}checked{% endif %} onchange="colorRow({{ stu.id }},'L')"/>
+                  <label class="btn btn-outline-warning" for="l_{{ stu.id }}">
+                    <i class="fa-solid fa-clock"></i> L
+                  </label>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center">
+      <div class="small text-muted">
+        <span class="badge bg-success me-1">P</span> Present &nbsp;
+        <span class="badge bg-danger me-1">A</span> Absent &nbsp;
+        <span class="badge bg-warning text-dark me-1">L</span> Late
+      </div>
+      <button type="submit" class="btn btn-primary px-4">
+        <i class="fa-solid fa-floppy-disk me-2"></i>Save Attendance
+      </button>
+    </div>
+  </div>
+</form>
+
+{% elif sel_subj_id %}
+<div class="alert alert-warning">
+  <i class="fa-solid fa-triangle-exclamation me-2"></i>
+  No students found for this subject configuration.
+</div>
+{% else %}
+<div class="alert alert-info">
+  <i class="fa-solid fa-circle-info me-2"></i>
+  Please select a subject and date to begin marking attendance.
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+function markAll(status){
+  document.querySelectorAll(`input[value="${status}"]`).forEach(r=>{
+    r.checked=true;
+    const id = r.name.replace('status_','');
+    colorRow(id, status);
+  });
+}
+function colorRow(id, status){
+  const row = document.getElementById('row_'+id);
+  row.className = status==='P' ? 'table-success' : status==='L' ? 'table-warning' : 'table-danger';
+}
+</script>
+{% endblock %}

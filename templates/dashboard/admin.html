@@ -1,0 +1,87 @@
+﻿{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">Admin Dashboard</h4>
+    <p class="text-muted mb-0">Bangalore Institute of Technology — Overview</p>
+  </div>
+  <span class="badge bg-danger fs-6">{{ today.strftime("%B %Y") }}</span>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card stat-blue">
+      <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+      <div class="stat-number">{{ total_students }}</div>
+      <div class="stat-label">Total Students</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card stat-green">
+      <div class="stat-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+      <div class="stat-number">{{ total_faculty }}</div>
+      <div class="stat-label">Faculty Members</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card stat-orange">
+      <div class="stat-icon"><i class="fa-solid fa-book-open"></i></div>
+      <div class="stat-number">{{ total_subjects }}</div>
+      <div class="stat-label">Subjects Mapped</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card stat-red">
+      <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div class="stat-number">{{ shortage_count }}</div>
+      <div class="stat-label">Attendance Shortages</div>
+    </div>
+  </div>
+</div>
+
+<!-- Departments Grid -->
+<div class="card shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span class="fw-semibold"><i class="fa-solid fa-building-columns me-2"></i>Departments</span>
+    <span class="badge bg-secondary">{{ departments|length }} Departments</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Department</th><th>Code</th>
+            <th class="text-center">Students</th>
+            <th class="text-center">Subjects</th>
+            <th class="text-center">Faculty</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for dept in departments %}
+          <tr>
+            <td class="fw-semibold">{{ dept.name }}</td>
+            <td><span class="badge bg-primary">{{ dept.code }}</span></td>
+            <td class="text-center">{{ dept.students.count() }}</td>
+            <td class="text-center">{{ dept.subjects.count() }}</td>
+            <td class="text-center">{{ dept.users.filter_by(role='faculty').count() }}</td>
+            <td class="text-center">
+              <a href="{{ url_for('students_list', dept_id=dept.id) }}"
+                 class="btn btn-sm btn-outline-primary">
+                <i class="fa-solid fa-eye"></i>
+              </a>
+              <a href="{{ url_for('monthly_attendance', dept_id=dept.id) }}"
+                 class="btn btn-sm btn-outline-success">
+                <i class="fa-solid fa-chart-bar"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

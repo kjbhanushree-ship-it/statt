@@ -1,0 +1,164 @@
+﻿/* =====================================================
+   BIT Bangalore Attendance System — Custom CSS
+   Color Palette: Navy Blue (#1F4E79) + Gold (#FFD700)
+   ===================================================== */
+
+:root {
+  --bit-navy: #1F4E79;
+  --bit-navy-dark: #163A57;
+  --bit-gold: #FFD700;
+  --bit-sidebar-width: 240px;
+  --bit-topbar-height: 56px;
+  --bit-transition: 0.25s ease;
+}
+
+/* ─── Body & Layout ─── */
+body { background: #F4F6F9; font-family: 'Segoe UI', sans-serif; }
+
+#wrapper { min-height: 100vh; }
+
+/* ─── Sidebar ─── */
+.sidebar {
+  width: var(--bit-sidebar-width);
+  min-height: 100vh;
+  background: var(--bit-navy);
+  color: #fff;
+  transition: width var(--bit-transition);
+  flex-shrink: 0;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-brand { border-bottom: 1px solid rgba(255,255,255,0.15); }
+.bit-logo { color: var(--bit-gold); }
+
+.sidebar .nav-link {
+  color: rgba(255,255,255,0.75);
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  margin-bottom: 2px;
+  transition: background var(--bit-transition), color var(--bit-transition);
+  font-size: 0.875rem;
+}
+.sidebar .nav-link:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.sidebar .nav-link.active {
+  background: var(--bit-gold);
+  color: var(--bit-navy);
+  font-weight: 600;
+}
+
+.sidebar-heading {
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.4);
+}
+
+.sidebar-divider { border-color: rgba(255,255,255,0.15); margin: 0.5rem 1rem; }
+.sidebar-footer { border-top: 1px solid rgba(255,255,255,0.15); }
+
+.user-avatar {
+  width: 34px; height: 34px;
+  background: var(--bit-gold);
+  color: var(--bit-navy);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1rem; flex-shrink: 0;
+}
+
+/* Collapsed sidebar */
+.sidebar-collapsed .sidebar { width: 60px; }
+.sidebar-collapsed .sidebar .nav-link span,
+.sidebar-collapsed .sidebar .sidebar-brand div,
+.sidebar-collapsed .sidebar .sidebar-heading,
+.sidebar-collapsed .sidebar .sidebar-footer .overflow-hidden { display: none; }
+.sidebar-collapsed #content-wrapper { margin-left: 0; }
+
+/* ─── Top Bar ─── */
+.topbar {
+  height: var(--bit-topbar-height);
+  background: #fff;
+  border-bottom: 1px solid #E5E9EF;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+/* ─── Content ─── */
+#content-wrapper { min-height: 100vh; overflow-x: hidden; }
+.content { min-height: calc(100vh - var(--bit-topbar-height) - 36px); }
+
+/* ─── Stat Cards ─── */
+.stat-card {
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+}
+.stat-blue   { background: linear-gradient(135deg, #1F4E79, #2E7BC4); }
+.stat-green  { background: linear-gradient(135deg, #198754, #20C997); }
+.stat-orange { background: linear-gradient(135deg, #E07B00, #FD7E14); }
+.stat-red    { background: linear-gradient(135deg, #9B1C1C, #DC3545); }
+
+.stat-icon   { font-size: 1.6rem; opacity: 0.8; }
+.stat-number { font-size: 2rem; font-weight: 700; line-height: 1; }
+.stat-label  { font-size: 0.8rem; opacity: 0.85; }
+
+/* ─── Login Page ─── */
+.login-page { background: linear-gradient(135deg, var(--bit-navy-dark) 0%, var(--bit-navy) 60%, #2E7BC4 100%); }
+.login-card {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%; max-width: 450px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+.login-header { background: linear-gradient(135deg, var(--bit-navy-dark), var(--bit-navy)); }
+.btn-bit {
+  background: var(--bit-navy);
+  color: #fff;
+  border: none;
+}
+.btn-bit:hover { background: var(--bit-navy-dark); color: #fff; }
+
+/* ─── Attendance Badges (calendar dots) ─── */
+.att-badge {
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  font-size: 0.75rem; font-weight: 600;
+  cursor: default;
+}
+.att-present { background: #D1FAE5; color: #065F46; }
+.att-absent  { background: #FEE2E2; color: #991B1B; }
+.att-late    { background: #FEF3C7; color: #92400E; }
+
+/* ─── Student Avatar ─── */
+.avatar-circle {
+  width: 52px; height: 52px;
+  background: var(--bit-navy);
+  color: #fff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; font-weight: 700; flex-shrink: 0;
+}
+
+/* ─── Tables ─── */
+.table thead th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.table tbody td { font-size: 0.875rem; vertical-align: middle; }
+
+/* ─── Cards ─── */
+.card { border: none; }
+.card-header { background: #fff; border-bottom: 1px solid #E5E9EF; font-size: 0.9rem; }
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .sidebar { position: fixed; z-index: 1050; transform: translateX(-100%); }
+  .sidebar-collapsed .sidebar { transform: translateX(0); width: var(--bit-sidebar-width); }
+  .sidebar-collapsed .sidebar .nav-link span { display: inline; }
+}

@@ -1,0 +1,116 @@
+﻿{% extends "base.html" %}
+{% block title %}My Attendance{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">My Attendance</h4>
+    <p class="text-muted mb-0">{{ student.name }} &bull; {{ student.usn }} &bull; {{ student.department.name }} &bull; Sem {{ student.semester }} Sec {{ student.section }}</p>
+  </div>
+  <span class="badge bg-primary fs-6">{{ month_name }} {{ year }}</span>
+</div>
+
+{% set shortage_count = att_data|selectattr('shortage')|list|length %}
+{% if shortage_count > 0 %}
+<div class="alert alert-danger alert-dismissible fade show">
+  <i class="fa-solid fa-triangle-exclamation me-2"></i>
+  <strong>Attendance Shortage!</strong> You have shortage in {{ shortage_count }} subject(s).
+  Minimum required: 75%.
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
+<!-- Overall Chart -->
+{% if att_data %}
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-semibold"><i class="fa-solid fa-chart-pie me-2"></i>Overall Attendance — {{ month_name }} {{ year }}</div>
+  <div class="card-body">
+    <canvas id="attendanceChart" height="80"></canvas>
+  </div>
+</div>
+{% endif %}
+
+<!-- Subject Cards -->
+<div class="row g-3">
+  {% for row in att_data %}
+  <div class="col-md-6">
+    <div class="card shadow-sm border-0 h-100 {% if row.shortage %}border-start border-danger border-3{% else %}border-start border-success border-3{% endif %}">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <div class="fw-bold">{{ row.subject.name }}</div>
+            <div class="text-muted small">{{ row.subject.code }}</div>
+          </div>
+          {% if row.shortage %}
+          <span class="badge bg-danger">SHORTAGE</span>
+          {% else %}
+          <span class="badge bg-success">OK</span>
+          {% endif %}
+        </div>
+        <div class="row text-center mb-2">
+          <div class="col-4">
+            <div class="fw-bold text-primary">{{ row.total }}</div>
+            <div class="text-muted" style="font-size:0.75rem;">Total</div>
+          </div>
+          <div class="col-4">
+            <div class="fw-bold text-success">{{ row.attended }}</div>
+            <div class="text-muted" style="font-size:0.75rem;">Attended</div>
+          </div>
+          <div class="col-4">
+            <div class="fw-bold {% if row.shortage %}text-danger{% else %}text-success{% endif %}">{{ row.effective_percentage }}%</div>
+            <div class="text-muted" style="font-size:0.75rem;">Effective %</div>
+          </div>
+        </div>
+        <div class="progress" style="height:8px;" title="{{ row.effective_percentage }}%">
+          <div class="progress-bar {% if row.shortage %}bg-danger{% elif row.effective_percentage >= 90 %}bg-success{% else %}bg-warning{% endif %}"
+               style="width:{{ row.effective_percentage }}%;"></div>
+        </div>
+        {% if row.shortage %}
+        <div class="mt-2 text-danger small">
+          <i class="fa-solid fa-circle-info me-1"></i>
+          Need {{ ((0.75 * row.total - row.attended)|round(0,'ceil'))|int }} more class(es) or apply for condonation.
+        </div>
+        {% endif %}
+        {% if row.condoned > 0 %}
+        <div class="mt-1 text-info small">
+          <i class="fa-solid fa-shield me-1"></i>Condoned: {{ row.condoned }} class(es)
+        </div>
+        {% endif %}
+        <div class="mt-2">
+          <a href="{{ url_for('student_detail', student_id=student.id, month=month, year=year) }}"
+             class="btn btn-sm btn-outline-primary">View Details</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12">
+    <div class="alert alert-info">No attendance data found for this month.</div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const labels = [{% for r in att_data %}"{{ r.subject.code }}"{% if not loop.last %},{% endif %}{% endfor %}];
+const data   = [{% for r in att_data %}{{ r.effective_percentage }}{% if not loop.last %},{% endif %}{% endfor %}];
+const colors = data.map(v => v >= 75 ? '#198754' : '#dc3545');
+const ctx = document.getElementById('attendanceChart');
+if(ctx){
+  new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Attendance %', data, backgroundColor: colors, borderRadius: 4 }] },
+    options: {
+      responsive: true,
+      scales: {
+        y: { min: 0, max: 100, ticks: { callback: v => v + '%' } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ctx.parsed.y + '%' } }
+      }
+    }
+  });
+  // Draw 75% threshold line via annotation (manual)
+}
+</script>
+{% endblock %}

@@ -1,0 +1,205 @@
+﻿{% extends "base.html" %}
+{% block title %}Monthly Report{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0"><i class="fa-solid fa-calendar-check me-2 text-success"></i>Monthly Attendance Report</h4>
+    <p class="text-muted mb-0">{{ month_name }} {{ year }}</p>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-semibold"><i class="fa-solid fa-filter me-2"></i>Filters</div>
+  <div class="card-body">
+    <form method="GET" class="row g-3 align-items-end" id="filterForm">
+      <div class="col-md-2">
+        <label class="form-label fw-semibold small">Month</label>
+        <select name="month" class="form-select" onchange="filterChanged()">
+          {% for m, mname in months %}
+          <option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ mname }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label fw-semibold small">Year</label>
+        <select name="year" class="form-select" onchange="filterChanged()">
+          {% for y in years %}
+          <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% if current_user.role == 'admin' %}
+      <div class="col-md-3">
+        <label class="form-label fw-semibold small">Department</label>
+        <select name="dept_id" class="form-select" onchange="filterChanged()">
+          <option value="">All Departments</option>
+          {% for d in departments %}
+          <option value="{{ d.id }}" {% if d.id == dept_id %}selected{% endif %}>{{ d.code }} — {{ d.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% else %}
+        <input type="hidden" name="dept_id" value="{{ dept_id or '' }}"/>
+      {% endif %}
+      <div class="col-md-2">
+        <label class="form-label fw-semibold small">Semester</label>
+        <select name="semester" class="form-select" onchange="filterChanged()">
+          <option value="">All Semesters</option>
+          {% for s in range(1,9) %}
+          <option value="{{ s }}" {% if s == semester %}selected{% endif %}>Sem {{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold small">Subject</label>
+        <select name="subject_id" class="form-select" onchange="this.form.submit()">
+          <option value="">-- Select Subject --</option>
+          {% for subj in subjects %}
+          <option value="{{ subj.id }}" {% if subj.id == subject_id %}selected{% endif %}>
+            {{ subj.code }} — {{ subj.name }} (Sec {{ subj.section }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if subject_id and summary %}
+{% set subject_obj = subjects | selectattr('id','eq',subject_id) | first %}
+{% set total_s = summary|length %}
+{% set shortage_s = summary|selectattr('shortage')|list|length %}
+{% set ok_s = total_s - shortage_s %}
+
+<!-- Summary Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="stat-card stat-blue">
+      <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+      <div class="stat-number">{{ total_s }}</div>
+      <div class="stat-label">Total Students</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="stat-card stat-green">
+      <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="stat-number">{{ ok_s }}</div>
+      <div class="stat-label">Above 75%</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="stat-card stat-red">
+      <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div class="stat-number">{{ shortage_s }}</div>
+      <div class="stat-label">Attendance Shortage</div>
+    </div>
+  </div>
+</div>
+
+<!-- Attendance Table -->
+<div class="card shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <span class="fw-semibold">
+      {{ subject_obj.name }} ({{ subject_obj.code }}) &mdash;
+      {{ subject_obj.department.name }} &mdash;
+      Sem {{ subject_obj.semester }} | Sec {{ subject_obj.section }}
+    </span>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('export_excel', subject_id=subject_id, month=month, year=year) }}"
+         class="btn btn-sm btn-success">
+        <i class="fa-solid fa-file-excel me-1"></i>Excel
+      </a>
+      <a href="{{ url_for('export_pdf', subject_id=subject_id, month=month, year=year) }}"
+         class="btn btn-sm btn-danger">
+        <i class="fa-solid fa-file-pdf me-1"></i>PDF
+      </a>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" id="summaryTable">
+        <thead class="table-dark">
+          <tr>
+            <th width="50">#</th>
+            <th>USN</th>
+            <th>Student Name</th>
+            <th class="text-center">Total<br>Classes</th>
+            <th class="text-center">Attended</th>
+            <th class="text-center">%</th>
+            <th class="text-center">Condoned</th>
+            <th class="text-center">Effective %</th>
+            <th class="text-center">Status</th>
+            {% if current_user.role != 'student' %}
+            <th class="text-center">Details</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in summary %}
+          <tr class="{% if row.shortage %}table-danger{% elif row.effective_percentage >= 90 %}table-success{% else %}table-warning{% endif %}">
+            <td class="text-muted">{{ loop.index }}</td>
+            <td><code>{{ row.student.usn }}</code></td>
+            <td class="fw-semibold">{{ row.student.name }}</td>
+            <td class="text-center">{{ row.total }}</td>
+            <td class="text-center">{{ row.attended }}</td>
+            <td class="text-center fw-bold">{{ row.percentage }}%</td>
+            <td class="text-center text-info">{{ row.condoned }}</td>
+            <td class="text-center fw-bold {% if row.shortage %}text-danger{% else %}text-success{% endif %}">
+              {{ row.effective_percentage }}%
+            </td>
+            <td class="text-center">
+              {% if row.shortage %}
+              <span class="badge bg-danger">SHORT</span>
+              {% else %}
+              <span class="badge bg-success">OK</span>
+              {% endif %}
+            </td>
+            {% if current_user.role != 'student' %}
+            <td class="text-center">
+              <a href="{{ url_for('student_detail', student_id=row.student.id, month=month, year=year) }}"
+                 class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-eye"></i></a>
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot class="table-secondary fw-bold">
+          <tr>
+            <td colspan="3">Total</td>
+            <td class="text-center">{{ summary[0].total if summary else 0 }}</td>
+            <td class="text-center">—</td>
+            <td class="text-center">—</td>
+            <td class="text-center">—</td>
+            <td class="text-center">—</td>
+            <td class="text-center">
+              <span class="text-danger">{{ shortage_s }} SHORT</span> /
+              <span class="text-success">{{ ok_s }} OK</span>
+            </td>
+            {% if current_user.role != 'student' %}<td></td>{% endif %}
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+  <div class="card-footer text-muted small">
+    Threshold: {{ threshold }}% &nbsp;|&nbsp;
+    <span class="text-success">&#9632;</span> ≥90%&nbsp;
+    <span class="text-warning">&#9632;</span> 75–89%&nbsp;
+    <span class="text-danger">&#9632;</span> &lt;75% (shortage)
+  </div>
+</div>
+
+{% elif subject_id %}
+<div class="alert alert-info"><i class="fa-solid fa-circle-info me-2"></i>No attendance data for this selection.</div>
+{% else %}
+<div class="alert alert-info"><i class="fa-solid fa-circle-info me-2"></i>Select a subject to view monthly attendance report.</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+function filterChanged(){
+  document.getElementById('filterForm').submit();
+}
+</script>
+{% endblock %}

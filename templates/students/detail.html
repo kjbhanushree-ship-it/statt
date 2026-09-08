@@ -1,0 +1,132 @@
+﻿{% extends "base.html" %}
+{% block title %}{{ student.name }} — Attendance{% endblock %}
+{% block content %}
+<!-- Student Info -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div class="avatar-circle">{{ student.name[0] }}</div>
+      <div class="flex-grow-1">
+        <h5 class="fw-bold mb-0">{{ student.name }}</h5>
+        <div class="text-muted small">
+          <code>{{ student.usn }}</code> &bull;
+          {{ student.department.name }} &bull;
+          Semester {{ student.semester }} &bull; Section {{ student.section }}
+        </div>
+      </div>
+      <div>
+        <form method="GET" class="d-flex gap-2 align-items-center">
+          <select name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+            {% for m, mname in months %}
+            <option value="{{ m }}" {% if m==month %}selected{% endif %}>{{ mname }}</option>
+            {% endfor %}
+          </select>
+          <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+            {% for y in years %}
+            <option value="{{ y }}" {% if y==year %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+          </select>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h5 class="fw-bold mb-3">Attendance — {{ month_name }} {{ year }}</h5>
+
+{% if att_data %}
+<!-- Chart -->
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-semibold"><i class="fa-solid fa-chart-bar me-2"></i>Subject-wise Summary</div>
+  <div class="card-body">
+    <canvas id="subjectChart" height="70"></canvas>
+  </div>
+</div>
+
+<!-- Subject-wise Detail -->
+{% for row in att_data %}
+<div class="card shadow-sm mb-3 border-0 {% if row.shortage %}border-start border-danger border-3{% else %}border-start border-success border-3{% endif %}">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <div>
+      <span class="fw-bold">{{ row.subject.name }}</span>
+      <span class="text-muted ms-2 small">{{ row.subject.code }}</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge {% if row.shortage %}bg-danger{% else %}bg-success{% endif %} fs-6">
+        {{ row.effective_percentage }}%
+      </span>
+      {% if row.shortage %}
+      <span class="badge bg-danger">SHORTAGE</span>
+      {% else %}
+      <span class="badge bg-success">OK</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="row text-center mb-3">
+      <div class="col-3">
+        <div class="fw-bold fs-5 text-primary">{{ row.total }}</div>
+        <div class="text-muted small">Total Classes</div>
+      </div>
+      <div class="col-3">
+        <div class="fw-bold fs-5 text-success">{{ row.attended }}</div>
+        <div class="text-muted small">Attended</div>
+      </div>
+      <div class="col-3">
+        <div class="fw-bold fs-5 text-danger">{{ row.total - row.attended }}</div>
+        <div class="text-muted small">Absent</div>
+      </div>
+      <div class="col-3">
+        <div class="fw-bold fs-5 text-info">{{ row.condoned }}</div>
+        <div class="text-muted small">Condoned</div>
+      </div>
+    </div>
+
+    <!-- Daily record grid -->
+    {% if row.records %}
+    <div class="d-flex flex-wrap gap-1 mt-2">
+      {% for rec in row.records %}
+      <span class="att-badge {% if rec.status=='P' %}att-present{% elif rec.status=='L' %}att-late{% else %}att-absent{% endif %}"
+            title="{{ rec.date.strftime('%d %b') }} — {{ rec.status }}">
+        {{ rec.date.strftime('%d') }}
+      </span>
+      {% endfor %}
+    </div>
+    <div class="mt-2 small text-muted">
+      <span class="att-badge att-present me-1">P</span>Present &nbsp;
+      <span class="att-badge att-late me-1">L</span>Late &nbsp;
+      <span class="att-badge att-absent me-1">A</span>Absent
+    </div>
+    {% endif %}
+
+    {% if row.shortage %}
+    <div class="alert alert-danger mt-3 mb-0 py-2">
+      <i class="fa-solid fa-triangle-exclamation me-1"></i>
+      Needs {{ ([0, (0.75 * row.total - row.attended - row.condoned)]|max)|int }} more class(es) to reach 75%.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="alert alert-info"><i class="fa-solid fa-circle-info me-2"></i>No attendance data available.</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+const labels = [{% for r in att_data %}"{{ r.subject.code }}"{% if not loop.last %},{% endif %}{% endfor %}];
+const data   = [{% for r in att_data %}{{ r.effective_percentage }}{% if not loop.last %},{% endif %}{% endfor %}];
+const colors = data.map(v => v >= 75 ? '#198754' : '#dc3545');
+const ctx = document.getElementById('subjectChart');
+if(ctx){
+  new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Attendance %', data, backgroundColor:colors, borderRadius:4 }] },
+    options:{
+      plugins:{ legend:{display:false} },
+      scales:{ y:{ min:0, max:100, ticks:{ callback: v => v+'%' } } }
+    }
+  });
+}
+</script>
+{% endblock %}

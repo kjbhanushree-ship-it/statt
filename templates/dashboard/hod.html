@@ -1,0 +1,68 @@
+﻿{% extends "base.html" %}
+{% block title %}HOD Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">HOD Dashboard</h4>
+    <p class="text-muted mb-0">{{ department.name }} — {{ today.strftime("%B %Y") }}</p>
+  </div>
+  <span class="badge bg-primary fs-6">{{ department.code }}</span>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="stat-card stat-blue">
+      <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+      <div class="stat-number">{{ student_count }}</div>
+      <div class="stat-label">Total Students</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="stat-card stat-green">
+      <div class="stat-icon"><i class="fa-solid fa-book-open"></i></div>
+      <div class="stat-number">{{ subject_count }}</div>
+      <div class="stat-label">Active Subjects</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="stat-card stat-red">
+      <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div class="stat-number">{{ shortage_count }}</div>
+      <div class="stat-label">Shortage Students</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header fw-semibold"><i class="fa-solid fa-bolt me-2"></i>Quick Actions</div>
+      <div class="card-body d-grid gap-2">
+        <a href="{{ url_for('monthly_attendance', dept_id=department.id, month=month, year=year) }}"
+           class="btn btn-primary"><i class="fa-solid fa-chart-bar me-2"></i>View Monthly Report</a>
+        <a href="{{ url_for('condonation', dept_id=department.id) }}"
+           class="btn btn-warning"><i class="fa-solid fa-shield-halved me-2"></i>Manage Condonation</a>
+        <a href="{{ url_for('students_list', dept_id=department.id) }}"
+           class="btn btn-outline-secondary"><i class="fa-solid fa-users me-2"></i>View All Students</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header fw-semibold text-danger">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>Shortage Alert ({{ month }}/{{ year }})
+      </div>
+      <div class="card-body">
+        {% if shortage_count > 0 %}
+        <p class="text-danger">{{ shortage_count }} student(s) have attendance below 75%.</p>
+        <a href="{{ url_for('condonation', dept_id=department.id) }}"
+           class="btn btn-sm btn-outline-danger">Review &amp; Condone</a>
+        {% else %}
+        <p class="text-success mb-0"><i class="fa-solid fa-circle-check me-1"></i>
+          All students have attendance ≥ 75% this month.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

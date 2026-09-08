@@ -1,0 +1,94 @@
+﻿{% extends "base.html" %}
+{% block title %}Students{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0"><i class="fa-solid fa-users me-2 text-primary"></i>Students</h4>
+    <p class="text-muted mb-0">{{ students|length }} student(s) found</p>
+  </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <input type="text" name="q" class="form-control" placeholder="Search by name or USN..."
+               value="{{ q or '' }}"/>
+      </div>
+      {% if current_user.role == 'admin' %}
+      <div class="col-md-3">
+        <select name="dept_id" class="form-select" onchange="this.form.submit()">
+          <option value="">All Departments</option>
+          {% for d in departments %}
+          <option value="{{ d.id }}" {% if d.id==dept_id %}selected{% endif %}>{{ d.code }} — {{ d.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% else %}
+        <input type="hidden" name="dept_id" value="{{ dept_id or '' }}"/>
+      {% endif %}
+      <div class="col-md-2">
+        <select name="semester" class="form-select" onchange="this.form.submit()">
+          <option value="">All Semesters</option>
+          {% for s in range(1,9) %}
+          <option value="{{ s }}" {% if s==semester %}selected{% endif %}>Sem {{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="section" class="form-select" onchange="this.form.submit()">
+          <option value="">All Sections</option>
+          {% for sec in ['A','B','C','D'] %}
+          <option value="{{ sec }}" {% if sec==section %}selected{% endif %}>Section {{ sec }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="fa-solid fa-search me-1"></i>Search
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>#</th><th>USN</th><th>Name</th>
+            <th>Department</th><th class="text-center">Sem</th><th class="text-center">Section</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for stu in students %}
+          <tr>
+            <td class="text-muted">{{ loop.index }}</td>
+            <td><code>{{ stu.usn }}</code></td>
+            <td class="fw-semibold">{{ stu.name }}</td>
+            <td>
+              <span class="badge bg-primary me-1">{{ stu.department.code }}</span>
+              {{ stu.department.name }}
+            </td>
+            <td class="text-center">{{ stu.semester }}</td>
+            <td class="text-center">{{ stu.section }}</td>
+            <td class="text-center">
+              <a href="{{ url_for('student_detail', student_id=stu.id) }}"
+                 class="btn btn-sm btn-outline-primary" title="View Attendance">
+                <i class="fa-solid fa-chart-bar"></i>
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No students found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

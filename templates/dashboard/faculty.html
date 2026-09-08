@@ -1,0 +1,56 @@
+﻿{% extends "base.html" %}
+{% block title %}Faculty Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">Faculty Dashboard</h4>
+    <p class="text-muted mb-0">Welcome, {{ current_user.name }}</p>
+  </div>
+  <span class="badge bg-success fs-6">{{ today.strftime("%d %b %Y") }}</span>
+</div>
+
+<div class="row g-3">
+  {% for subj in subjects %}
+  {% set td = today_records.get(subj.id, {}) %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card shadow-sm h-100 border-0">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <div class="fw-bold">{{ subj.name }}</div>
+            <div class="text-muted small">{{ subj.code }} &bull; Sem {{ subj.semester }} &bull; Sec {{ subj.section }}</div>
+          </div>
+          {% if td.done %}
+          <span class="badge bg-success"><i class="fa-solid fa-check"></i> Done</span>
+          {% else %}
+          <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock"></i> Pending</span>
+          {% endif %}
+        </div>
+        <div class="progress mb-2" style="height:6px;" title="{{ td.marked }}/{{ td.total }} marked">
+          <div class="progress-bar {% if td.done %}bg-success{% else %}bg-warning{% endif %}"
+               style="width:{% if td.total %}{{ (td.marked/td.total*100)|int }}{% else %}0{% endif %}%"></div>
+        </div>
+        <div class="text-muted small mb-3">{{ td.marked }}/{{ td.total }} students marked today</div>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('mark_attendance', subject_id=subj.id, date=today.isoformat()) }}"
+             class="btn btn-sm btn-primary flex-grow-1">
+            <i class="fa-solid fa-pen me-1"></i>Mark Today
+          </a>
+          <a href="{{ url_for('monthly_attendance', subject_id=subj.id) }}"
+             class="btn btn-sm btn-outline-secondary">
+            <i class="fa-solid fa-chart-bar"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12">
+    <div class="alert alert-info">
+      <i class="fa-solid fa-circle-info me-2"></i>
+      No subjects assigned to you yet. Contact admin.
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
