@@ -445,7 +445,7 @@ def create_app(config_class=Config):
         ws = wb.active
         ws.title = f'{calendar.month_abbr[month]} {year}'
 
-        hdr_fill = PatternFill('solid', fgColor='1F4E79')
+        hdr_fill = PatternFill('solid', fgColor='182B49')
         hdr_font = Font(bold=True, color='FFFFFF', size=10)
         center   = Alignment(horizontal='center', vertical='center')
 
@@ -544,7 +544,7 @@ def create_app(config_class=Config):
         col_w = [1.2*cm, 3.5*cm, 6*cm, 2*cm, 2.5*cm, 2*cm, 2.5*cm, 2*cm, 2*cm]
         tbl   = Table(data, colWidths=col_w, repeatRows=1)
         cmds  = [
-            ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1F4E79')),
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#182B49')),
             ('TEXTCOLOR',  (0,0), (-1,0), colors.white),
             ('FONTNAME',   (0,0), (-1,0), 'Helvetica-Bold'),
             ('FONTSIZE',   (0,0), (-1,0), 9),
